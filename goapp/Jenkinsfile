@@ -1,0 +1,63 @@
+pipeline {
+    parameters {
+        string(defaultValue: '', description: 'For deploy', name: 'jwt_token', trim: true)
+        string(defaultValue: 'https://mr4.digitalenergy.online', description: 'For app', name: 'url', trim: true)
+        string(defaultValue: 'https://sso.digitalenergy.online', description: 'For app', name: 'sso_url', trim: true)
+        string(defaultValue: '', description: 'For deploy and app', name: 'app_id', trim: true)
+        string(defaultValue: '', description: 'For deploy and app', name: 'app_secret', trim: true)
+        string(defaultValue: '', description: 'For deploy and app', name: 'k8sid', trim: true)
+    }
+    agent { label 'vm_node'}
+    environment {
+        CGO_ENABLED = 0
+        DECORT_JWT = "${params.jwt_token}"
+        DECORT_APP_ID = "${params.app_id}"
+        DECORT_APP_SECRET = "${params.app_secret}"
+        DECORT_SSO_URL = "${params.sso_url}"
+        DECORT_URL = "${params.url}"
+        DECORT_K8SID = "${params.k8sid}"
+    }
+    stages {        
+        stage('Pre Test') {
+            steps {
+                echo 'Check dependencies'
+                sh 'go version'
+                sh 'ansible --version'
+                sh 'terraform --version'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo 'Compiling and building'
+                sh 'go build'
+            }
+        }
+
+        stage('Create VM') {
+            steps {
+                sh 'terraform init'
+                echo 'Create VM'
+                sh 'terraform apply -auto-approve'
+                echo 'Update output ip_address'
+                sh 'terraform apply -auto-approve'
+                echo 'Sleep 30, waiting for the virtual machine to come up'
+                sleep(time:30)
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo 'Deploy application to VM and run'
+                sh 'ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook main.yml -i `terraform output -raw ip_address`, -e "ansible_user=`terraform output -raw login` ansible_password=`terraform output -raw password` ansible_become_password=`terraform output -raw password`"'
+            }
+        }
+        
+    }
+    post {
+        always {
+            sh 'echo "" > $HOME/.ssh/known_hosts'
+            cleanWs()
+        }
+    }
+}

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<!--
+  WARNING! Make sure that you match all Quasar related
+  tags to the same version! (Below it's "@2.11.6")
+-->
+
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet"
+          type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/quasar@2.11.6/dist/quasar.prod.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<!-- example of injection point where you write your app template -->
+<div id="q-app">
+    <q-btn label="Обновить" @click="reload"></q-btn>
+
+
+    <q-card v-if="k8s">
+        <q-card-section>
+            <div class="text-h6">
+                {{k8s.name}}
+            </div>
+            <div class="row">
+                <q-chip :label="k8s.status"></q-chip>
+                <q-chip :label="k8s.techStatus"></q-chip>
+
+            </div>
+
+
+            Master:
+            <div class="row">
+                <q-card v-for="cluster in [k8s.k8sGroups.masters]" style="width:500px">
+                    <q-card-section>
+
+                        <div class="text-body2">
+                            {{cluster.name}}
+                        </div>
+
+                        <template v-for="d in cluster.detailedInfo">
+
+                            <q-chip :label="d.name"></q-chip>
+                            <q-chip :label="d.status"></q-chip>
+                            <q-chip :label="d.techStatus"></q-chip>
+
+                        </template>
+
+                        <div>
+                            <b>
+                                Disk:
+                            </b>
+                            {{cluster.disk}}
+                        </div>
+                        <div>
+                            <b>
+                                RAM:
+                            </b>
+                            {{cluster.ram}}
+                        </div>
+                        <div>
+                            <b>
+                                CPU:
+                            </b>
+                            {{cluster.cpu}}
+                        </div>
+<!--                        {{cluster}}-->
+                    </q-card-section>
+                </q-card>
+            </div>
+
+            Workers:
+            <div class="row">
+                <q-card v-for="cluster in k8s.k8sGroups.workers" style="width:500px">
+                    <q-card-section>
+                        <div class="text-body2">
+                            {{cluster.name}}
+                        </div>
+
+                        <template v-for="d in cluster.detailedInfo">
+
+                            <q-chip :label="d.name"></q-chip>
+                            <q-chip :label="d.status"></q-chip>
+                            <q-chip :label="d.techStatus"></q-chip>
+
+                        </template>
+
+                        <div>
+                            <b>
+                                Disk:
+                            </b>
+                            {{cluster.disk}}
+                        </div>
+                        <div>
+                            <b>
+                                RAM:
+                            </b>
+                            {{cluster.ram}}
+                        </div>
+                        <div>
+                            <b>
+                                CPU:
+                            </b>
+                            {{cluster.cpu}}
+                        </div>
+<!--                        {{cluster}}-->
+                    </q-card-section>
+                </q-card>
+            </div>
+
+        </q-card-section>
+    </q-card>
+    {{k8s}}
+</div>
+
+<!-- Add the following at the end of your body tag -->
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quasar@2.11.6/dist/quasar.umd.prod.js"></script>
+
+<script>
+    /*
+      Example kicking off the UI. Obviously, adapt this to your specific needs.
+      Assumes you have a <div id="q-app"></div> in your <body> above
+     */
+    const app = Vue.createApp({
+        setup() {
+            const loading = Vue.ref(false)
+            const k8s = Vue.ref(null)
+
+            const reload = async () => {
+                Quasar.Loading.show({
+                    message: "Fetching decort"
+                })
+                const res = await fetch('/api/k8s')
+
+                k8s.value = await res.json()
+
+                Quasar.Loading.hide()
+            }
+            Vue.onMounted(() => {
+                reload()
+            })
+            return {
+                k8s,
+                loading,
+                reload
+            }
+        },
+    })
+
+    app.use(Quasar)
+    app.mount('#q-app')
+</script>
+</body>
+</html>

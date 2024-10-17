@@ -1,0 +1,42 @@
+- name: Check connection
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Wait 600 seconds for target connection to become reachable/usable
+      ansible.builtin.wait_for_connection:
+
+- name: Deploy application
+  hosts: all
+  become: true
+  tasks:
+    - name: mkdir /opt/app
+      file:
+        state: directory
+        path: /opt/app
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+    - name: Copy app
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { src: "basis_1_main", dest: "/opt/app/", owner: "{{ ansible_user }}", group: "{{ ansible_user }}", mode: "0554" }
+        - { src: "static", dest: "/opt/app/", owner: "{{ ansible_user }}", group: "{{ ansible_user }}", mode: "0444" }
+    - name: Copy service file
+      template:
+        src: goapp.service.j2
+        dest: /etc/systemd/system/goapp.service
+        owner: root
+        group: root
+        mode: 0644
+    - name: Daemod reload
+      systemd:
+        daemon_reload: true
+    - name: Start app
+      systemd:
+        name: goapp
+        state: restarted
+        enabled: yes

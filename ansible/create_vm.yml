@@ -1,0 +1,25 @@
+- name: Create VM
+  hosts: localhost
+  gather_facts: no
+  vars:
+    authenticator: oauth2
+    oauth2_url: "https://sso.digitalenergy.online"
+    controller_url: "https://mr4.digitalenergy.online"
+  tasks:
+    - name: Create vm
+      decort_kvmvm:
+        authenticator: "{{ authenticator }}"
+        oauth2_url: "{{ oauth2_url }}"
+        controller_url: "{{ controller_url }}"
+        account_id: "{{ account_id }}"
+        name: 'lab'
+        cpu: 4
+        ram: 8192
+        boot_disk: 100
+        image_id: 388
+        networks:
+          - type: EXTNET
+            id: 3
+        rg_id: "{{ rg_id }}"
+        annotation: "lab vm"
+      register: new_vm

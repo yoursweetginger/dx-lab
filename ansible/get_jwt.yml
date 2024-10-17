@@ -1,0 +1,14 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    authenticator: oauth2
+    oauth2_url: "https://sso.digitalenergy.online"
+  tasks:
+  - name: Get JWT
+    decort_jwt:
+      oauth2_url: "{{ oauth2_url }}"
+      validity: 3600
+    register: my_token
+  - name: Show JWT
+    debug:
+      msg: "{{ my_token.jwt }}"

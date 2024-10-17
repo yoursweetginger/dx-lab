@@ -1,0 +1,26 @@
+controller:
+  serviceType: LoadBalancer
+  image: docker.io/jenkins/jenkins
+  tagLabel: lts-jdk11
+  numExecutors: 1
+  ingress:
+    enabled: true
+    apiVersion: networking.k8s.io/v1
+    ingressClassName: nginx
+    # annotations:
+    #   cert-manager.io/cluster-issuer: letsencrypt
+    hostname: jenkins.exm.unitex.space
+    tls:
+    - secretName: jenkins.exm.unitex.space
+      hosts:
+        - jenkins.exm.unitex.space
+  sidecars:
+    configAutoReload:
+      image: docker.io/kiwigrid/k8s-sidecar:1.24.4
+  additionalPlugins: 
+    - ws-cleanup
+    - ssh-slaves
+persistence:
+  enabled: false
+agent:
+  image: docker.io/jenkins/inbound-agent

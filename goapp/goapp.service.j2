@@ -1,0 +1,15 @@
+[Unit]
+Description=go application to show k8s info
+
+[Service]
+User=user
+WorkingDirectory=/opt/app
+ExecStart=/opt/app/basis_1_main
+Environment="DECORT_APP_ID={{ lookup('ansible.builtin.env', 'DECORT_APP_ID') }}"
+Environment="DECORT_APP_SECRET={{ lookup('ansible.builtin.env', 'DECORT_APP_SECRET') }}"
+Environment="DECORT_SSO_URL={{ lookup('ansible.builtin.env', 'DECORT_SSO_URL') }}"
+Environment="DECORT_URL={{ lookup('ansible.builtin.env', 'DECORT_URL') }}"
+Environment="DECORT_K8SID={{ lookup('ansible.builtin.env', 'DECORT_K8SID') }}"
+
+[Install]
+WantedBy=default.target

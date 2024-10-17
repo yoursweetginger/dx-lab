@@ -1,0 +1,22 @@
+version: '3.6'
+services:
+  web:
+    image: 'gitlab/gitlab-ee:latest'
+    restart: always
+    hostname: 'git.exm.unitex.space'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://git.exm.unitex.space'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        letsencrypt['enable'] = true
+        letsencrypt['auto_renew'] = true
+        letsencrypt['contact_emails'] = ['andrey@unitex.msk.ru']
+    ports:
+      - '80:80'
+      - '443:443'
+      - '2222:22'
+    volumes:
+      - '$GITLAB_HOME/config:/etc/gitlab'
+      - '$GITLAB_HOME/logs:/var/log/gitlab'
+      - '$GITLAB_HOME/data:/var/opt/gitlab'
+    shm_size: '256m'

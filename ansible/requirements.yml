@@ -1,0 +1,12 @@
+roles:
+  - name: geerlingguy.docker
+    version: "6.1.0"
+  - name: robertdebock.terraform
+    version: "4.1.5"
+  - name: gantsign.golang
+    version: "3.1.1"
+  - name: geerlingguy.ansible
+    version: "2.2.0"
+collections:
+  - name: community.docker
+    version: "3.4.8"

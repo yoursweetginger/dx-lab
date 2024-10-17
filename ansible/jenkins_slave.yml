@@ -1,0 +1,78 @@
+- name: Create jenkins slave
+  hosts: localhost
+  vars:
+    authenticator: oauth2
+    oauth2_url: "https://sso.digitalenergy.online"
+    controller_url: "https://mr4.digitalenergy.online"
+  tasks:
+    - name: Create vm
+      decort_kvmvm:
+        authenticator: "{{ authenticator }}"
+        oauth2_url: "{{ oauth2_url }}"
+        controller_url: "{{ controller_url }}"
+        account_id: "{{ account_id }}"
+        name: "jenkins_slave"
+        cpu: 2
+        ram: 2048
+        boot_disk: 50
+        image_id: 388
+        networks:
+          - type: EXTNET
+            id: 3
+        rg_id: "{{ rg_id }}"
+      register: new_vm
+    - name: Show vm info
+      debug:
+        msg: "{{ new_vm.facts }}"
+    - name: Add new host to inventory
+      ansible.builtin.add_host:
+        hostname: "{{ new_vm.facts.name }}"
+        ansible_host: "{{ new_vm.facts.public_ips[0] }}"
+        groups:
+          - jenkins_slave
+        ansible_user: "{{ new_vm.facts.username }}"
+        ansible_ssh_pass: "{{ new_vm.facts.password }}"
+        ansible_become_password: "{{ new_vm.facts.password }}"
+
+- hosts: jenkins_slave
+  gather_facts: no
+  tasks:
+    - name: Wait 600 seconds for target connection to become reachable/usable
+      ansible.builtin.wait_for_connection:
+
+- hosts: jenkins_slave
+  become: true
+  vars:
+    username: "{{ hostvars.localhost.new_vm.facts.username }}"
+    golang_version: "1.20.1"
+  pre_tasks:
+    - name: Update chache apt
+      apt:
+        update_cache: true
+    - name: Install required packages
+      apt:
+        name:
+          - unzip
+  roles:
+    - role: robertdebock.terraform
+      vars:
+        terraform_version: "1.0.11"
+        terraform_software_mirror: "hashicorp-releases.yandexcloud.net"
+    - role: gantsign.golang
+    - role: geerlingguy.ansible
+  tasks:
+    - name: Install JRE
+      apt:
+        name:
+          - default-jre
+    - name: Create symlink go-bin
+      file:
+        src: "/opt/go/{{ golang_version }}/bin/go"
+        dest: /usr/local/bin/go
+        state: link
+    - name: Copy terraform provider decort
+      become: no
+      copy:
+        src: ./files/terraform-provider/terraform-provider-decort_4.2.2_linux_amd64
+        dest: $HOME/.terraform.d/plugins/digitalenergy.online/decort/decort/4.2.2/linux_amd64/
+        mode: 0755
